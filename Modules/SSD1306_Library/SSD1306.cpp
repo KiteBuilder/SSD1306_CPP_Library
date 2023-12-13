@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 
 #include <SSD1306.h>
 
@@ -405,41 +406,52 @@ uint32_t SSD1306_Interface::calc_sqrt(uint32_t val)
   */
 void SSD1306_Interface::ssd1306_DrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, SSD1306_COLOR color)
 {
-    uint8_t x = x0, y = y0;
-    int32_t sign;
+    int16_t sign = 0;
+    int16_t a = y0 - y1;
+    int16_t b = x1 - x0;
+    int32_t c = (x0 * y1) - (y0 * x1);
 
-    int32_t a,b,c;
-
-    if (x0 != x1)
+    if (b != 0)
     {
-        a = (y0 - y1);
-        b = (x1 - x0);
-        c = x0*y1 - y0*x1;
-
-        sign = (x0 > x1) ? -1 : 1;
+        if (abs(b) > abs(a))
+        {
+            sign = (x0 > x1) ? -1 : 1;
+        }
+        else
+        {
+            sign = (y0 > y1) ? -1 : 1;
+        }
     }
-    else
+    else if (a != 0)
     {
         sign = (y0 > y1) ? -1 : 1;
     }
 
     do
     {
-        ssd1306_DrawPixel(x, y, color);
+        ssd1306_DrawPixel(x0, y0, color);
 
-        if (x0 != x1)
+        if (b != 0)
         {
-            x += sign;
-            y = (-a*x - c) / b;
+            if (abs(b) > abs(a))
+            {
+                x0 += sign;
+                y0 = ((-a * x0) - c) / b;
+            }
+            else
+            {
+                y0 += sign;
+                x0 = (y0*b + c)/-a;
+            }
         }
-        else
+        else if (a != 0)
         {
-            y += sign;
+            y0 += sign;
         }
 
-    } while ((x != x1) || (y != y1));
+    } while ((x0 != x1) || (y0 != y1));
 
-    ssd1306_DrawPixel(x, y, color);
+    ssd1306_DrawPixel(x0, y0, color);
 }
 
 /**
